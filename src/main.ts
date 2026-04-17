@@ -1,9 +1,7 @@
 import {readdirSync, readFileSync, writeFileSync} from "fs"
-import {AuArgs, parseAuArgs} from "./args"
 import {compileGenerator, parseGenerator} from "./generator"
 import {Gloss, parseGloss} from "./gloss"
 import {Lexicon, LexiconIndex, parseLexicon} from "./lexicon"
-import {parseArgs} from "./lib/args"
 import {exhausted} from "./lib/exhaust"
 import {_} from "./lib/functions"
 import {exitOnFailure} from "./lib/process"
@@ -13,34 +11,56 @@ import {Morphology, parseMorphology} from "./morphology"
 import {parseText, Text, toString} from "./text"
 import {Translator} from "./translator"
 import {listRecursively} from "./lib/files"
+import {Crust} from "@crustjs/core"
+import {helpPlugin} from "@crustjs/plugins"
 
-export function main() {
-  const args = _(
-    process.argv.slice(2),
-    parseArgs,
-    parseAuArgs,
-    exitOnFailure(),
-  )
+export async function main() {
+  const app = new Crust("au")
+    .use(helpPlugin())
+    .flags({
+      C: {
+        type: "string",
+        default: ".",
+        description: "Working directory",
+        inherit: true,
+      },
+      includeSources: {
+        type: "boolean",
+        default: false,
+        description: "Include sources",
+        short: "s",
+      },
+    })
+    .preRun(({flags}) => {
+      process.chdir(flags.C)
+    })
+    .run(({flags}) => {
+      const result = defaultSubcommand(flags.includeSources)
+      exitOnFailure()(result)
+    })
 
-  process.chdir(args.workingDirectory)
+  const trCmd = app
+    .sub("tr")
+    .args([
+      {name: "glossesToTranslate", type: "string", variadic: true},
+    ] as const)
+    .run(({args}) => {
+      const result = tr(args.glossesToTranslate ?? [])
+      exitOnFailure()(result)
+    })
 
-  const result = (() => {
-    switch (args.subcommand) {
-      case "":
-        return defaultSubcommand(args)
-      case "tr":
-        return tr(args)
-      case "gen":
-        return gen(args)
-      default:
-        throw exhausted(args)
-    }
-  })()
+  const genCmd = app
+    .sub("gen")
+    .args([{name: "generator", type: "string"}] as const)
+    .run(({args}) => {
+      const result = gen(args.generator)
+      exitOnFailure()(result)
+    })
 
-  exitOnFailure()(result)
+  await app.command(trCmd).command(genCmd).execute()
 }
 
-function defaultSubcommand(args: Extract<AuArgs, {subcommand: ""}>) {
+function defaultSubcommand(includeSources: boolean) {
   type Inputs = {
     lexicon: Result<Lexicon, string>
     morphology: Result<Morphology, string>
@@ -55,9 +75,7 @@ function defaultSubcommand(args: Extract<AuArgs, {subcommand: ""}>) {
     Result.map(({lexicon, morphology, texts}) => {
       const translate = Translator(index(lexicon), morphology)
       return texts.map(
-        second(
-          toString(translate, {includeSource: args.includeSources}),
-        ),
+        second(toString(translate, {includeSource: includeSources})),
       )
     }),
     Result.map((texts) => {
@@ -70,9 +88,7 @@ function defaultSubcommand(args: Extract<AuArgs, {subcommand: ""}>) {
   )
 }
 
-function tr(
-  args: Extract<AuArgs, {subcommand: "tr"}>,
-): Result<void, string> {
+function tr(glossesToTranslate: Array<string>): Result<void, string> {
   type Inputs = {
     lexicon: Result<Lexicon, string>
     morphology: Result<Morphology, string>
@@ -83,7 +99,7 @@ function tr(
       lexicon: loadLexicon(),
       morphology: loadMorphology(),
       glossesToTranslate: Result.all(
-        args.glossesToTranslate.map((g) =>
+        glossesToTranslate.map((g) =>
           parseGloss("implicit-pointers", g),
         ),
       ),
@@ -95,9 +111,7 @@ function tr(
   )
 }
 
-function gen(
-  args: Extract<AuArgs, {subcommand: "gen"}>,
-): Result<void, string> {
+function gen(generatorName?: string): Result<void, string> {
   type Inputs = {
     generator: Result<(ruleName?: string) => string, string>
   }
@@ -111,7 +125,7 @@ function gen(
     }),
     Result.map(({generator}) => {
       for (let i = 0; i < 30; i++) {
-        console.log(generator(args.generator))
+        console.log(generator(generatorName))
       }
     }),
   )
