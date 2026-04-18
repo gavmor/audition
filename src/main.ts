@@ -178,3 +178,5 @@ function index(lexicon: Lexicon): LexiconIndex {
 function removeAuExtension(filename: string): string {
   return filename.replace(/\.au$/, "")
 }
+
+main()
