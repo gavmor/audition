@@ -11,8 +11,30 @@ on:
       - main
 
 jobs:
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build parsers
+        run: ./peg
+
+      - name: Run tests
+        run: npm test
+
   build:
     name: Build ${{ matrix.target }}
+    needs: test
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -44,7 +66,18 @@ jobs:
             OUTFILE="${OUTFILE}.exe"
           fi
           bun build ./src/main.ts --compile --target=${{ matrix.target }} --outfile=$OUTFILE
-          
+
+      - name: Smoke test --help
+        if: matrix.target == 'bun-linux-x64'
+        run: |
+          output=$(./au-bun-linux-x64 --help)
+          echo "$output"
+          echo "$output" | grep -q "USAGE"
+
+      - name: Smoke test compilation
+        if: matrix.target == 'bun-linux-x64'
+        run: ./au-bun-linux-x64 -C test-language/
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:

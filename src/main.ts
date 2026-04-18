@@ -179,4 +179,6 @@ function removeAuExtension(filename: string): string {
   return filename.replace(/\.au$/, "")
 }
 
-main()
+if (import.meta.main) {
+  main()
+}
