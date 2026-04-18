@@ -1,14 +1,14 @@
 #!/bin/sh
 
-node_modules/.bin/pegjs \
+bunx pegjs \
   -o src/lib/generated/csv-parser.js \
   src/lib/csv.pegjs
 
-node_modules/.bin/pegjs \
+bunx pegjs \
   -o src/generated/gloss-parser.js \
   --allowed-start-rules GlossWithImplicitLiterals,GlossWithImplicitPointers \
   src/gloss.pegjs
 
-node_modules/.bin/pegjs \
+bunx pegjs \
   -o src/generated/generator-rule-parser.js \
   src/generator-rule.pegjs

@@ -30,9 +30,9 @@ Audition is not an extraordinarily flexible tool. It was designed around the syn
 
 ## Get started
 
-1. [Install `bun`](https://bun.sh/) and [`yarn`](https://yarnpkg.com/getting-started/install).
+1. [Install `bun`](https://bun.sh/).
 2. Clone this repo and `cd` in.
-3. `yarn install`. If you forget to do this, things will be subtly broken as of the latest `bun` version (Dec 21, 2022)!
+3. `bun install`
 4. `./au -C test-language`
 5. Mess with the files in `test-language/` and see what happens.
 
@@ -88,12 +88,12 @@ the given `DIRECTORY` or subdirectories, overwriting the corresponding output fi
 
 ## Development
 
-Run `yarn husky install` after cloning the repo, to set up git hooks. There's a pre-commit
+Run `bunx husky install` after cloning the repo, to set up git hooks. There's a pre-commit
 hook that auto-formats changed files.
 
-`yarn test` or `./test` runs the tests.
+`bun test` or `./test` runs the tests.
 
-`yarn peg` generates parsers from `*.pegjs` sources.
+`bun run peg` generates parsers from `*.pegjs` sources.
 
 ## Input Format
 

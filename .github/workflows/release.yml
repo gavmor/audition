@@ -30,7 +30,7 @@ jobs:
         run: ./peg
 
       - name: Run tests
-        run: npm test
+        run: bun run test
 
   build:
     name: Build ${{ matrix.target }}
