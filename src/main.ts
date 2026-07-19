@@ -57,7 +57,14 @@ export async function main() {
       exitOnFailure()(result)
     })
 
-  await app.command(trCmd).command(genCmd).execute()
+  const initCmd = app
+    .sub("init")
+    .run(() => {
+      const result = initCommand()
+      exitOnFailure()(result)
+    })
+
+  await app.command(trCmd).command(genCmd).command(initCmd).execute()
 }
 
 function defaultSubcommand(includeSources: boolean) {
@@ -129,6 +136,44 @@ function gen(generatorName?: string): Result<void, string> {
       }
     }),
   )
+}
+
+function initCommand(): Result<void, string> {
+  try {
+    writeFileSync("lexicon.csv", `id,translation,generator
+1SG,im,
+come,tol,
+help,tha,
+2OBJ,le,
+`);
+
+    writeFileSync("morphology.yaml", `inflections:
+  1SG:
+    - ["([aeiou])$", "$1n"]
+    - ["$", "ion"]
+  INF:
+    - ["$", "ed"]
+`);
+
+    writeFileSync("generator.txt", `default:
+  [C][V][C]
+  [C][V][C][V]
+
+C: t p k n l r s h
+V: a i u
+`);
+
+    writeFileSync("sample.md.au", `> __1SG#CAP ^Arwen. come#1SG 2OBJ help#INF.__
+> "I am Arwen. I've come to help you."
+>
+> —the _Fellowship of the Ring_ movie
+`);
+    
+    console.log("Initialized new Audition project. Try running 'au' to compile sample.md.au!")
+    return success(undefined)
+  } catch (e: any) {
+    return failure(e.message)
+  }
 }
 
 function loadLexicon(): Result<Lexicon, string> {
