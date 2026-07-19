@@ -1,7 +1,7 @@
 {
-  "name": "audition",
+  "name": "@gavmor/audition",
   "version": "1.0.0",
-  "repository": "git@github.com:benchristel/audition.git",
+  "repository": "git@github.com:gavmor/audition.git",
   "author": "Ben Christel <ben.christel@gmail.com>",
   "license": "MIT",
   "devDependencies": {
@@ -14,7 +14,12 @@
   "scripts": {
     "test": "./test",
     "peg": "./peg",
-    "format": "prettier -w src"
+    "format": "prettier -w src",
+    "build": "bun build ./src/cli.ts --outdir=dist --target=node"
+  },
+  "bin": {
+    "au": "./dist/cli.js",
+    "create-audition-project": "./dist/cli.js"
   },
   "dependencies": {
     "@benchristel/taste": "0.5.0",
