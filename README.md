@@ -33,8 +33,10 @@ Audition is not an extraordinarily flexible tool. It was designed around the syn
 1. [Install `bun`](https://bun.sh/).
 2. Clone this repo and `cd` in.
 3. `bun install`
-4. `./au -C test-language`
-5. Mess with the files in `test-language/` and see what happens.
+4. `mkdir my-conlang && cd my-conlang`
+5. `../au init` (This scaffolds a new project with boilerplate templates)
+6. `../au` (This translates the boilerplate `sample.md.au`)
+7. Mess with the files in your new directory and see what happens.
 
 ## Overview
 
@@ -76,6 +78,7 @@ Usage:
 
 ```
 au [-C DIRECTORY]
+au init [-C DIRECTORY]
 au tr [strings to translate] [-C DIRECTORY]
 ```
 
