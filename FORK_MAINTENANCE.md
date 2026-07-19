@@ -10,19 +10,23 @@ The `main` branch is strictly a pristine, read-only mirror of `upstream/main`. I
 
 ## Day-to-Day Workflow
 
-### 1. Creating a New Feature
+### 1. Establishing the Epic Baseline
 
-All new features are developed in total isolation. Always branch directly from `main` unless the new feature explicitly depends on another unmerged feature branch.
+Because we maintain a major structural rewrite of the CLI tooling, `main` is no longer sufficient as our daily baseline. Instead, we use `feat-core-updates` (our epic branch) as the "floating baseline." This branch holds the new architectural reality of our application.
+
+### 2. Creating a New Feature
+
+All new features must be cut directly from the epic branch (`feat-core-updates`), not `main`. This ensures new work has access to the updated architecture.
 
 ```bash
-# Start from the pristine mirror
-git checkout main
+# Start from the new foundational epic branch
+git checkout feat-core-updates
 
-# Cut a new isolated branch
+# Cut a new isolated feature branch
 git checkout -b feat-my-new-thing
 ```
 
-### 2. Testing and Deploying (`dev-combined`)
+### 3. Testing and Deploying (`dev-combined`)
 
 We never deploy or test isolated features alone. Instead, we use a single integration branch called `dev-combined`. 
 
@@ -37,14 +41,16 @@ git checkout dev-combined
 git merge feat-my-new-thing
 ```
 
-### 3. Syncing with Upstream
+### 4. The Chained Sync Routine
 
-When `benchristel/audition` pushes a major update, we rebuild our stack:
+When the upstream repository pushes a major update, we perform a cascading rebase:
 
-1. Update the `main` mirror (`git fetch upstream && git rebase upstream/main`).
-2. Rebase all active feature branches onto the new `main`.
-3. Blow away the old integration branch (`git branch -D dev-combined`).
-4. Recreate `dev-combined` from `main` and merge all rebased feature branches back in.
+1. **Sync the Mirror:** Update your pristine `main` directly from `upstream/main`.
+2. **Rebase the Epic:** Check out `feat-core-updates` and rebase it onto `main`. Resolve any heavy structural conflicts here (which `git rerere` will record).
+3. **Rebase the Features:** Check out your active feature branches (like `feat-my-new-thing`) and rebase them onto the newly updated `feat-core-updates`.
+4. **Rebuild Integration:** Recreate your throwaway `dev-combined` branch starting from `feat-core-updates`, then merge your feature branches in for testing.
+
+This creates a clean, linear hierarchy: `main` -> `feat-core-updates` -> `isolated-features`.
 
 ## Resolving Structural Conflicts (`git rerere`)
 
