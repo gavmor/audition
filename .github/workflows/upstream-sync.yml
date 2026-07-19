@@ -1,0 +1,32 @@
+name: "Monthly Upstream Sync"
+
+on:
+  schedule:
+    - cron: '0 0 1 * *' # Runs at 00:00 on the 1st of every month
+  workflow_dispatch: # Allows you to manually trigger the workflow from the UI
+
+jobs:
+  sync_with_upstream:
+    name: Sync with Upstream
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required to push the synced commits to your fork
+
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v4
+        with:
+          # Required for the sync action
+          fetch-depth: 0
+
+      - name: Sync Upstream
+        uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
+        with:
+          target_sync_branch: main
+          target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+          upstream_sync_branch: main
+          upstream_sync_repo: benchristel/audition
+          
+          # This action will automatically fast-forward the mirror `main` branch.
+          # If there are conflicts (which shouldn't happen if you never commit to main),
+          # it will fail and you will be notified by GitHub to handle it manually.
