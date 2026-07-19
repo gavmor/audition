@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - main
+      - 'release-*'
+      - 'dev-combined'
     tags:
-      - 'v*'
+      - 'fork-v*'
   pull_request:
     branches:
       - main
@@ -88,7 +90,7 @@ jobs:
     name: Release
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/fork-v')
     permissions:
       contents: write
     steps:
