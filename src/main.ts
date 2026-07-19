@@ -1,7 +1,7 @@
 import {readdirSync, readFileSync, writeFileSync} from "fs"
 import {compileGenerator, parseGenerator} from "./generator"
-import {Gloss, parseGloss} from "./gloss"
-import {Lexicon, LexiconIndex, parseLexicon} from "./lexicon"
+import {Gloss, literal, parseGloss, serializeGloss} from "./gloss"
+import {Lexicon, LexiconIndex, parseLexicon, serializeLexicon} from "./lexicon"
 import {exhausted} from "./lib/exhaust"
 import {_} from "./lib/functions"
 import {exitOnFailure} from "./lib/process"
@@ -112,23 +112,61 @@ function tr(glossesToTranslate: Array<string>): Result<void, string> {
 }
 
 function gen(generatorName?: string): Result<void, string> {
-  type Inputs = {
-    generator: Result<(ruleName?: string) => string, string>
+  if (generatorName) {
+    type Inputs = {
+      generator: Result<(ruleName?: string) => string, string>
+    }
+    return _(
+      Result.objAll<Inputs, string>({
+        generator: _(
+          readFileSync("generator.txt").toString(),
+          parseGenerator,
+          Result.flatMap(compileGenerator(Math.random)),
+        ),
+      }),
+      Result.map(({generator}) => {
+        for (let i = 0; i < 30; i++) {
+          console.log(generator(generatorName))
+        }
+      }),
+    )
+  } else {
+    type Inputs = {
+      generator: Result<(ruleName?: string) => string, string>
+      lexicon: Result<Lexicon, string>
+    }
+    return _(
+      Result.objAll<Inputs, string>({
+        generator: _(
+          readFileSync("generator.txt").toString(),
+          parseGenerator,
+          Result.flatMap(compileGenerator(Math.random)),
+        ),
+        lexicon: loadLexicon(),
+      }),
+      Result.map(({generator, lexicon}) => {
+        const updatedLexicon = {
+          ...lexicon,
+          lexemes: lexicon.lexemes.map((lexeme) => {
+            if (
+              serializeGloss(
+                "implicit-literals",
+                lexeme.translation,
+              )[0] === "?"
+            ) {
+              return {
+                ...lexeme,
+                translation: literal(`?${generator(lexeme.generator)}`),
+              }
+            } else {
+              return lexeme
+            }
+          }),
+        }
+        writeFileSync("lexicon.csv", serializeLexicon(updatedLexicon))
+      }),
+    )
   }
-  return _(
-    Result.objAll<Inputs, string>({
-      generator: _(
-        readFileSync("generator.txt").toString(),
-        parseGenerator,
-        Result.flatMap(compileGenerator(Math.random)),
-      ),
-    }),
-    Result.map(({generator}) => {
-      for (let i = 0; i < 30; i++) {
-        console.log(generator(generatorName))
-      }
-    }),
-  )
 }
 
 function loadLexicon(): Result<Lexicon, string> {
